@@ -1,12 +1,49 @@
 <template>
-  <div class="flex h-screen bg-gray-50 font-sans">
+  <div v-if="!isLoggedIn" class="flex items-center justify-center h-screen bg-gray-900">
+    <div class="bg-white p-10 rounded-xl shadow-2xl w-full max-w-md">
+      <div class="text-center mb-8">
+        <h1 class="text-4xl font-extrabold text-blue-600 mb-2">UniSlot</h1>
+        <p class="text-gray-500 text-sm">Akıllı Sınav ve Gözetmen Yönetim Sistemi</p>
+      </div>
+
+      <div class="space-y-4">
+        <input
+          v-model="loginEmail"
+          type="email"
+          placeholder="Email"
+          class="w-full border p-3 rounded-lg"
+        />
+
+        <input
+          v-model="loginPassword"
+          type="password"
+          placeholder="Şifre"
+          class="w-full border p-3 rounded-lg"
+        />
+
+        <button
+          @click="login"
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow"
+        >
+          Giriş Yap
+        </button>
+
+        <p class="text-sm text-gray-500 text-center">
+          Admin: admin@gmail.com / 1234<br>
+          Viewer: viewer@gmail.com / 1234
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div v-else class="flex h-screen bg-gray-50 font-sans">
 
     <aside class="w-64 bg-gray-900 text-white flex flex-col shadow-2xl z-10">
       <div class="p-6 text-3xl font-extrabold border-b border-gray-800 text-center tracking-wider text-blue-400">
         UniSlot
       </div>
       <nav class="flex-1 p-4 space-y-3 mt-4">
-        <button @click="activeTab = 'dersler'" :class="{'bg-blue-600 shadow-lg': activeTab === 'dersler', 'hover:bg-gray-800 text-gray-300': activeTab !== 'dersler'}" class="w-full text-left px-4 py-3 rounded-lg transition-all font-medium flex items-center gap-3">
+        <button v-if="activeRole === 'admin'" @click="activeTab = 'dersler'" :class="{'bg-blue-600 shadow-lg': activeTab === 'dersler', 'hover:bg-gray-800 text-gray-300': activeTab !== 'dersler'}" class="w-full text-left px-4 py-3 rounded-lg transition-all font-medium flex items-center gap-3">
            Sınav Yönetimi
         </button>
         <button @click="activeTab = 'rapor'; fetchRapor()" :class="{'bg-blue-600 shadow-lg': activeTab === 'rapor', 'hover:bg-gray-800 text-gray-300': activeTab !== 'rapor'}" class="w-full text-left px-4 py-3 rounded-lg transition-all font-medium flex items-center gap-3">
@@ -14,19 +51,30 @@
         </button>
       </nav>
       <div class="p-4 border-t border-gray-800 text-center">
-        <button @click="sistemYedegiAl" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded shadow transition-colors duration-200">
-           Sistemi Yedekle
+        <button
+          v-if="activeRole === 'admin'"
+          @click="sistemYedegiAl"
+          class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded shadow transition-colors duration-200"
+        >
+          Sistemi Yedekle
         </button>
+
       </div>
     </aside>
 
     <main class="flex-1 p-8 overflow-y-auto relative">
 
       <div class="flex justify-end space-x-3 mb-8">
-        <button @click="showBolumYonetimiModal = true; fetchBolumler()" class="bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-300 font-bold py-2 px-4 rounded shadow-sm transition"> Bölümler</button>
-        <button @click="showDerslikYonetimiModal = true; fetchDerslikler()" class="bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-300 font-bold py-2 px-4 rounded shadow-sm transition"> Mekanlar</button>
-        <button @click="showPersonelYonetimiModal = true; fetchPersoneller(); fetchBolumler()" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border border-indigo-300 font-bold py-2 px-4 rounded shadow-sm transition"> Personeller</button>
-        <button @click="showModal = true" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded shadow-lg transition">+ Yeni Ders Ekle</button>
+        <button  v-if="activeRole === 'admin'" @click="showBolumYonetimiModal = true; fetchBolumler()" class="bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-300 font-bold py-2 px-4 rounded shadow-sm transition"> Bölümler</button>
+        <button  v-if="activeRole === 'admin'" @click="showDerslikYonetimiModal = true; fetchDerslikler()" class="bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-300 font-bold py-2 px-4 rounded shadow-sm transition"> Mekanlar</button>
+        <button  v-if="activeRole === 'admin'" @click="showPersonelYonetimiModal = true; fetchPersoneller(); fetchBolumler()" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 border border-indigo-300 font-bold py-2 px-4 rounded shadow-sm transition"> Personeller</button>
+        <button  v-if="activeRole === 'admin'" @click="showModal = true" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded shadow-lg transition">+ Yeni Ders Ekle</button>
+        <button
+          @click="logout"
+          class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-5 rounded shadow-lg transition"
+        >
+          Çıkış Yap
+        </button>
       </div>
 
       <div class="max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6 border border-gray-100">
@@ -45,7 +93,7 @@
                 <th class="py-3 px-4 border-b font-semibold text-gray-600">Ders Adı</th>
                 <th class="py-3 px-4 border-b font-semibold text-gray-600">Öğrenci Sayısı</th>
                 <th class="py-3 px-4 border-b font-semibold text-gray-600">Yarıyıl</th>
-                <th class="py-3 px-4 border-b font-semibold text-gray-600">İşlemler</th>
+                <th v-if="activeRole === 'admin'" class="py-3 px-4 border-b font-semibold text-gray-600">İşlemler</th>
               </tr>
               </thead>
               <tbody>
@@ -54,7 +102,7 @@
                 <td class="py-3 px-4 border-b text-gray-800 font-medium">{{ ders.ad }}</td>
                 <td class="py-3 px-4 border-b text-gray-800">{{ ders.ogrenciSayisi }}</td>
                 <td class="py-3 px-4 border-b text-gray-800">{{ ders.yariyil }}. Dönem</td>
-                <td class="py-3 px-4 border-b text-gray-800">
+                <td v-if="activeRole === 'admin'" class="py-3 px-4 border-b text-gray-800">
                   <button @click="salonAta(ders.dersId)" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm font-medium shadow">Salon Ata</button>
                   <button @click="salonlariGor(ders.dersId)" class="ml-2 bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded text-sm font-medium shadow">Salonları Gör</button>
                 </td>
@@ -273,6 +321,37 @@ import axios from 'axios'
 
 // --- SEKME YÖNETİMİ ---
 const activeTab = ref('dersler')
+const isLoggedIn = ref(false)
+const activeRole = ref(null)
+const loginEmail = ref('')
+const loginPassword = ref('')
+
+const login = () => {
+  if (loginEmail.value === 'admin@gmail.com' && loginPassword.value === '1234') {
+    activeRole.value = 'admin'
+    isLoggedIn.value = true
+    activeTab.value = 'dersler'
+    return
+  }
+
+  if (loginEmail.value === 'viewer@gmail.com' && loginPassword.value === '1234') {
+    activeRole.value = 'viewer'
+    isLoggedIn.value = true
+    activeTab.value = 'rapor'
+    fetchRapor()
+    return
+  }
+
+  alert('Email veya şifre hatalı!')
+}
+
+const logout = () => {
+  isLoggedIn.value = false
+  activeRole.value = null
+  activeTab.value = 'dersler'
+  loginEmail.value = ''
+  loginPassword.value = ''
+}
 
 // --- DERSLER ---
 const dersler = ref([])
