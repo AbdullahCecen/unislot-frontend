@@ -178,6 +178,7 @@ const yeniBolumAdi = ref('')
 const yeniDerslik = ref({
   ad: '',
   tip: '',
+  kat: null,
   kapasite: null,
   aktif: 1
 })
@@ -252,7 +253,7 @@ const fetchDersler = async () => {
   }
 }
 
-const dersiKaydet = async () => {
+const dersKaydet = async () => {
   try {
     await axios.post('http://localhost:8080/api/dersler', yeniDers.value)
 
@@ -351,8 +352,9 @@ const fetchDerslikler = async () => {
 }
 
 const derslikKaydet = async () => {
-  if (!yeniDerslik.value.ad || !yeniDerslik.value.tip || yeniDerslik.value.kapasite <= 0) {
-    setMessage('Derslik adı, tip ve kapasite bilgileri zorunludur.', 'error')
+  // 1. İf şartına kat kontrolü eklendi
+  if (!yeniDerslik.value.ad || !yeniDerslik.value.tip || yeniDerslik.value.kapasite <= 0 || yeniDerslik.value.kat === null || yeniDerslik.value.kat === '') {
+    setMessage('Derslik adı, kat, tip ve kapasite bilgileri zorunludur.', 'error')
     return
   }
 
@@ -361,9 +363,11 @@ const derslikKaydet = async () => {
 
     setMessage('Derslik başarıyla eklendi.', 'success')
 
+    // 2. Form sıfırlanırken kat da sıfırlanacak
     yeniDerslik.value = {
       ad: '',
       tip: '',
+      kat: null, // <-- YENİ EKLENDİ
       kapasite: null,
       aktif: 1
     }
@@ -374,7 +378,6 @@ const derslikKaydet = async () => {
     console.error(error)
   }
 }
-
 const derslikSil = async (id) => {
   if (!confirm('Bu dersliği silmek istediğinize emin misiniz?')) return
 

@@ -23,6 +23,13 @@
 
       <div class="flex gap-2">
         <button
+          v-if="activeRole === 'admin'"
+          @click="topluSalonAta"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded font-bold shadow"
+        >
+          Toplu Salon Ata (Optimize)
+        </button>
+        <button
           @click="raporOlustur"
           class="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded font-bold shadow"
         >
@@ -614,6 +621,18 @@ const sinavGuncelleKaydet = async () => {
     emit('refresh-rapor') // Verilerin ana sayfada yenilenmesini sağlar
   } catch (error) {
     setMessage(error.response?.data?.message || 'Sınav güncellenirken hata oluştu.', 'error')
+    console.error(error)
+  }
+}
+const topluSalonAta = async () => {
+  if (!confirm('Sistemdeki atanmamış tüm sınavlar için optimize edilmiş salon ataması başlatılacak. Onaylıyor musunuz?')) return
+
+  try {
+    const response = await axios.post('http://localhost:8080/api/sinavlar/toplu-salon-ata')
+    setMessage(response.data, 'success')
+    emit('refresh-rapor') // Listeyi yenile
+  } catch (error) {
+    setMessage(error.response?.data || 'Toplu atama işlemi başarısız oldu.', 'error')
     console.error(error)
   }
 }

@@ -8,12 +8,12 @@
       <input
         v-model="localDerslik.ad"
         placeholder="Derslik Adı"
-        class="border p-2 rounded w-2/5"
+        class="border p-2 rounded flex-1"
       />
 
       <select
         v-model="localDerslik.tip"
-        class="border p-2 rounded w-1/5 bg-white"
+        class="border p-2 rounded w-32 bg-white"
       >
         <option value="" disabled>Tip</option>
         <option value="Amfi">Amfi</option>
@@ -22,11 +22,18 @@
       </select>
 
       <input
+        v-model="localDerslik.kat"
+        type="number"
+        placeholder="Kat (Örn: 0, 1, 2)"
+        class="border p-2 rounded w-36"
+      />
+
+      <input
         v-model="localDerslik.kapasite"
         type="number"
         min="1"
         placeholder="Kapasite"
-        class="border p-2 rounded w-1/5"
+        class="border p-2 rounded w-32"
       />
 
       <button
@@ -36,7 +43,6 @@
         Ekle
       </button>
     </div>
-
     <div class="flex justify-between items-center mb-3">
       <div class="text-sm text-gray-600">
         Toplam {{ derslikler.length }} derslik kaydı
@@ -61,6 +67,7 @@
       <thead class="bg-gray-100 text-left">
       <tr>
         <th class="py-3 px-4 border-b">Derslik Adı</th>
+        <th class="py-3 px-4 border-b">Kat</th>
         <th class="py-3 px-4 border-b">Tip</th>
         <th class="py-3 px-4 border-b">Kapasite</th>
         <th class="py-3 px-4 border-b">Durum</th>
@@ -75,7 +82,7 @@
         class="hover:bg-gray-50"
       >
         <td class="py-3 px-4 border-b font-medium">{{ derslik.ad }}</td>
-        <td class="py-3 px-4 border-b">{{ derslik.tip }}</td>
+        <td class="py-3 px-4 border-b">{{ derslik.kat }}. Kat</td> <td class="py-3 px-4 border-b">{{ derslik.tip }}</td>
         <td class="py-3 px-4 border-b">{{ derslik.kapasite }} Kişi</td>
         <td class="py-3 px-4 border-b">
           <span
