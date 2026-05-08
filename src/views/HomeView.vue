@@ -5,6 +5,7 @@
     <Header
       :active-role="activeRole"
       @logout="logout"
+      class="print:hidden"
     />
 
     <div class="flex flex-1 overflow-hidden">
@@ -13,6 +14,7 @@
         :active-role="activeRole"
         @change-tab="handleTabChange"
         @backup="sistemYedegiAl"
+        class="print:hidden"
       />
 
       <main class="flex-1 p-8 overflow-y-auto relative">

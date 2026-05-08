@@ -637,9 +637,13 @@ const topluSalonAta = async () => {
   }
 }
 </script>
-
 <style scoped>
 @media print {
+  @page {
+    size: landscape;
+    margin: 5mm; /* Kağıt kenar boşluklarını iyice daralttık ki tabloya yer açılsın */
+  }
+
   .no-print {
     display: none !important;
   }
@@ -648,19 +652,42 @@ const topluSalonAta = async () => {
     background: white !important;
   }
 
-  #print-area {
-    border: none !important;
-    padding-top: 0 !important;
-    margin-top: 0 !important;
+  /* 1. EN KRİTİK NOKTA: Tablonun yazdırılırken kaydırma çubuğu çıkarmasını engeller */
+  .overflow-x-auto {
+    overflow: visible !important;
   }
 
+  #print-area {
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  /* 2. TABLOYU KAĞIDA ZORLA SIĞDIRMA AYARLARI */
   .report-table {
-    font-size: 11px;
+    font-size: 8pt !important; /* Yazıları biraz küçülttük */
+    width: 100% !important;
+    max-width: 100% !important;
+    table-layout: fixed !important; /* Tüm sütunları kağıt genişliğine göre eşit/orantılı sıkıştırır */
+    word-wrap: break-word !important; /* Uzun metinleri taşırmak yerine alt satıra atar */
+    border-collapse: collapse !important;
   }
 
   .report-table th,
   .report-table td {
-    padding: 6px !important;
+    padding: 4px !important;
+    border: 1px solid #333 !important;
+    white-space: normal !important; /* Metnin sütun dışına çıkmasını engeller */
+    overflow: hidden !important;
+  }
+
+  /* Renklerin PDF'de düzgün çıkması için */
+  .report-table thead tr,
+  .report-table th,
+  .report-table td.bg-gray-100 {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
 </style>
