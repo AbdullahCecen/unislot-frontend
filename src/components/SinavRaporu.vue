@@ -107,31 +107,66 @@
           </td>
 
           <td v-if="activeRole === 'admin'" class="py-3 px-4 border-b whitespace-nowrap">
-            <button
-              @click="salonAta(rapor.sinavId)"
-              :disabled="rapor.ayrilanKapasite > 0"
-              :class="[
-                'text-white px-3 py-1 rounded text-sm font-medium shadow',
-                rapor.ayrilanKapasite > 0
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-blue-500 hover:bg-blue-600'
-              ]"
-            >
-              {{ rapor.ayrilanKapasite > 0 ? 'Salon Atandı' : 'Salon Ata' }}
-            </button>
+            <div class="relative inline-block">
+              <button
+                @click="rapor.ayrilanKapasite > 0 ? salonlariAcKapat(rapor.sinavId) : salonAta(rapor.sinavId)"
+                :class="[
+                  'inline-flex items-center gap-1 text-white px-3 py-1 rounded text-sm font-medium shadow',
+                  rapor.ayrilanKapasite > 0
+                    ? 'bg-gray-500 hover:bg-gray-600'
+                    : 'bg-blue-500 hover:bg-blue-600'
+                ]"
+              >
+                <span>{{ rapor.ayrilanKapasite > 0 ? 'Salon Atandı' : 'Salon Ata' }}</span>
+                <span
+                  v-if="rapor.ayrilanKapasite > 0"
+                  aria-hidden="true"
+                  :class="[
+                    'text-xs transition-transform',
+                    acikSalonSinavId === rapor.sinavId ? 'rotate-180' : ''
+                  ]"
+                >
+                  &#9662;
+                </span>
+              </button>
+
+              <div
+                v-if="acikSalonSinavId === rapor.sinavId"
+                class="mt-2 w-72 whitespace-normal rounded border border-blue-200 bg-white p-3 text-left shadow-lg"
+              >
+                <div v-if="salonlarYukleniyor" class="text-sm text-gray-500">
+                  Salonlar yükleniyor...
+                </div>
+
+                <div
+                  v-else-if="!salonlarBySinavId[rapor.sinavId] || salonlarBySinavId[rapor.sinavId].length === 0"
+                  class="text-sm text-gray-500 italic"
+                >
+                  Bu sınav için henüz salon ataması yapılmamış.
+                </div>
+
+                <ul v-else class="space-y-2">
+                  <li
+                    v-for="(salon, index) in salonlarBySinavId[rapor.sinavId]"
+                    :key="`${rapor.sinavId}-${index}`"
+                    class="rounded border border-blue-100 bg-blue-50 p-2"
+                  >
+                    <div class="font-semibold text-blue-800">{{ salon.ad }}</div>
+                    <div class="text-xs text-gray-600">
+                      Tip: {{ salon.tip }} |
+                      Kat: {{ salon.kat ?? '-' }} |
+                      Kapasite: {{ salon.kapasite }}
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
 
             <button
               @click="gozetmenAta(rapor.sinavId)"
               class="ml-2 bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm font-medium shadow"
             >
               Gözetmen Ata
-            </button>
-
-            <button
-              @click="salonlariGor(rapor.sinavId)"
-              class="ml-2 bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded text-sm font-medium shadow"
-            >
-              Salonları Gör
             </button>
 
             <button
@@ -280,39 +315,6 @@
     </div>
 
     <div
-      v-if="showSalonModal"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 no-print"
-    >
-      <div class="bg-white p-6 rounded-lg shadow-xl w-[450px]">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-bold text-gray-800">Atanan Salonlar</h3>
-          <button @click="showSalonModal = false" class="text-red-500 font-bold text-xl">
-            &times;
-          </button>
-        </div>
-
-        <div v-if="atananSalonlar.length === 0" class="text-gray-500 italic text-center py-4">
-          Bu sınav için henüz salon ataması yapılmamış.
-        </div>
-
-        <ul v-else class="space-y-2">
-          <li
-            v-for="(salon, index) in atananSalonlar"
-            :key="index"
-            class="bg-blue-50 border border-blue-200 p-3 rounded"
-          >
-            <div class="font-semibold text-blue-800">{{ salon.ad }}</div>
-            <div class="text-sm text-gray-600">
-              Tip: {{ salon.tip }} |
-              Kat: {{ salon.kat ?? '-' }} |
-              Kapasite: {{ salon.kapasite }}
-            </div>
-          </li>
-        </ul>
-      </div>
-    </div>
-
-    <div
       v-if="showGozetmenModal"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 no-print"
     >
@@ -415,10 +417,11 @@ const emit = defineEmits(['refresh-rapor'])
 const message = ref('')
 const messageType = ref('success')
 
-const showSalonModal = ref(false)
 const showGozetmenModal = ref(false)
 
-const atananSalonlar = ref([])
+const acikSalonSinavId = ref(null)
+const salonlarYukleniyor = ref(false)
+const salonlarBySinavId = ref({})
 const atananGozetmenler = ref([])
 
 const kayitSayisi = ref(5)
@@ -538,14 +541,30 @@ const gozetmenAta = async (sinavId) => {
   }
 }
 
-const salonlariGor = async (sinavId) => {
+const salonlariAcKapat = async (sinavId) => {
+  if (acikSalonSinavId.value === sinavId) {
+    acikSalonSinavId.value = null
+    return
+  }
+
+  acikSalonSinavId.value = sinavId
+
+  if (salonlarBySinavId.value[sinavId]) return
+
+  salonlarYukleniyor.value = true
+
   try {
     const response = await axios.get(`http://localhost:8080/api/sinavlar/${sinavId}/salonlar`)
-    atananSalonlar.value = response.data
-    showSalonModal.value = true
+    salonlarBySinavId.value = {
+      ...salonlarBySinavId.value,
+      [sinavId]: response.data
+    }
   } catch (error) {
+    acikSalonSinavId.value = null
     setMessage('Salonlar getirilirken hata oluştu.', 'error')
     console.error(error)
+  } finally {
+    salonlarYukleniyor.value = false
   }
 }
 
